@@ -9,7 +9,8 @@ import re
 
 # --- Configuration --- #
 # Path to your best.pt model file. This needs to be accessible in your deployment.
-MODEL_PATH = "runs/detect/bottle_label_detection/weights/best.pt"
+# Assuming best.pt is in the same directory as app.py for simplicity
+MODEL_PATH = "best.pt"
 
 # Initialize YOLO model (load only once)
 @st.cache_resource
@@ -88,7 +89,7 @@ for variant, standardized_name in brand_corrections.items():
         corrected_mapping[standardized_name] = []
     corrected_mapping[standardized_name].append(variant)
 
-# Define the clean_and_classify_text function (copy-pasted from your notebook)
+# Define the clean_and_classify_text function
 def clean_and_classify_text(ocr_texts, brand_corrections_map):
 
     def get_standardized_brand(text_to_classify):
@@ -140,13 +141,10 @@ if uploaded_file is not None:
     st.image(image_pil, caption="Uploaded Image", use_column_width=True)
     st.write("")
 
-    # Preprocess image for YOLO (resize to 640x640 if not already)
-    # The YOLO model handles resizing internally, but consistent input size can be good.
-    # For this example, we'll let model.predict handle it.
-
     st.subheader("Processing Image...")
 
     # Perform object detection
+    # verbose=False suppresses logging messages which is good for Streamlit deployment
     results = model.predict(img_cv2, conf=0.25, verbose=False)
 
     if results and results[0].boxes:
@@ -204,4 +202,3 @@ if uploaded_file is not None:
         st.warning("No bottle labels found in the uploaded image.")
 else:
     st.info("Please upload an image to get started.")
-
