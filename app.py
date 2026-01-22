@@ -6,16 +6,37 @@ import easyocr
 import os
 from PIL import Image
 import re
+import requests # Added for downloading the model
 
 # --- Configuration --- #
-# Path to your best.pt model file. This needs to be accessible in your deployment.
-# Assuming best.pt is in the same directory as app.py for simplicity
-MODEL_PATH = "best.pt"
+# Direct URL to the raw best.pt file on GitHub
+GITHUB_MODEL_URL = "https://raw.githubusercontent.com/FaithKinya/winesandspirits-label-detection/main/runs/detect/bottle_label_detection/weights/best.pt"
+LOCAL_MODEL_PATH = "best.pt" # Path where the model will be saved locally in the Streamlit app container
+
+# Function to download the model if it doesn't exist locally
+def download_model_if_not_exists(url, local_path):
+    if not os.path.exists(local_path):
+        st.write(f"Downloading model from {url}...")
+        try:
+            response = requests.get(url, stream=True)
+            response.raise_for_status() # Raise an exception for HTTP errors
+            with open(local_path, "wb") as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+            st.write("Model downloaded successfully!")
+        except requests.exceptions.RequestException as e:
+            st.error(f"Error downloading model: {e}")
+            st.stop() # Stop the app if model cannot be downloaded
+    else:
+        st.write("Model already exists locally.")
+
+# Download the model at app startup
+download_model_if_not_exists(GITHUB_MODEL_URL, LOCAL_MODEL_PATH)
 
 # Initialize YOLO model (load only once)
 @st.cache_resource
 def load_yolo_model():
-    return YOLO(MODEL_PATH)
+    return YOLO(LOCAL_MODEL_PATH)
 
 # Initialize EasyOCR reader (load only once)
 @st.cache_resource
